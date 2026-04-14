@@ -213,15 +213,17 @@ function updateSeekUI() {
   }
 }
 
-function playVariant(variant) {
+function playVariant(variant, preservePausedOffset = false) {
   if (!audioBuffer) {
     return;
   }
 
   const wasPlaying = Boolean(state.currentSource);
   if (wasPlaying) {
-    const elapsed = audioCtx.currentTime - state.startedAtCtxTime;
-    state.pausedOffset = Math.min(audioBuffer.duration, state.startedAtOffset + Math.max(elapsed, 0));
+    if (!preservePausedOffset) {
+      const elapsed = audioCtx.currentTime - state.startedAtCtxTime;
+      state.pausedOffset = Math.min(audioBuffer.duration, state.startedAtOffset + Math.max(elapsed, 0));
+    }
     stopPlaybackWithFadeOut();
   } else {
     stopCurrentPlayback();
@@ -280,7 +282,7 @@ function pausePlayback() {
 }
 
 function restartCurrentVariant() {
-  playVariant(state.currentVariant);
+  playVariant(state.currentVariant, true);
 }
 
 function nextTrial() {
