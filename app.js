@@ -28,6 +28,7 @@ const restartBtn = document.getElementById("restartBtn");
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let audioBuffer = null;
+const FADE_TIME_SEC = 0.012;
 
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
@@ -120,13 +121,46 @@ function stopCurrentPlayback() {
 
 function getCurrentVariantGain(variant) {
   const louderGain = dbToLinearGain(state.dbDifference);
-  const quieterGain = 1;
+  // Keep A/B ratio while preserving headroom: never amplify above unity gain.
+  const baseGain = 1 / louderGain;
+  const quieterGain = baseGain;
+  const louderSafeGain = baseGain * louderGain;
   const aIsLouder = state.loudIsA[state.currentTrial - 1];
 
   if (variant === "A") {
-    return aIsLouder ? louderGain : quieterGain;
+    return aIsLouder ? louderSafeGain : quieterGain;
   }
-  return aIsLouder ? quieterGain : louderGain;
+  return aIsLouder ? quieterGain : louderSafeGain;
+}
+
+function stopPlaybackWithFadeOut(durationSec = FADE_TIME_SEC) {
+  if (!state.currentSource || !state.currentGainNode) {
+    stopCurrentPlayback();
+    return;
+  }
+
+  const source = state.currentSource;
+  const gainNode = state.currentGainNode;
+  const now = audioCtx.currentTime;
+  const fadeEnd = now + Math.max(0, durationSec);
+
+  gainNode.gain.cancelScheduledValues(now);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+  gainNode.gain.linearRampToValueAtTime(0, fadeEnd);
+
+  try {
+    source.stop(fadeEnd + 0.002);
+  } catch (_) {
+    // Source might already be stopped.
+  }
+
+  state.currentSource = null;
+  state.currentGainNode = null;
+
+  if (state.rafId) {
+    cancelAnimationFrame(state.rafId);
+    state.rafId = null;
+  }
 }
 
 function formatTime(seconds) {
@@ -175,14 +209,25 @@ function playVariant(variant) {
     return;
   }
 
-  stopCurrentPlayback();
+  const wasPlaying = Boolean(state.currentSource);
+  if (wasPlaying) {
+    const elapsed = audioCtx.currentTime - state.startedAtCtxTime;
+    state.pausedOffset = Math.min(audioBuffer.duration, state.startedAtOffset + Math.max(elapsed, 0));
+    stopPlaybackWithFadeOut();
+  } else {
+    stopCurrentPlayback();
+  }
+
   state.currentVariant = variant;
 
   const source = audioCtx.createBufferSource();
   source.buffer = audioBuffer;
 
   const gainNode = audioCtx.createGain();
-  gainNode.gain.value = getCurrentVariantGain(variant);
+  const now = audioCtx.currentTime;
+  const targetGain = getCurrentVariantGain(variant);
+  gainNode.gain.setValueAtTime(0, now);
+  gainNode.gain.linearRampToValueAtTime(targetGain, now + FADE_TIME_SEC);
 
   source.connect(gainNode);
   gainNode.connect(audioCtx.destination);
@@ -193,6 +238,9 @@ function playVariant(variant) {
   state.startedAtCtxTime = audioCtx.currentTime;
 
   source.onended = () => {
+    source.disconnect();
+    gainNode.disconnect();
+
     if (state.currentSource === source) {
       state.pausedOffset = Math.min(audioBuffer.duration, state.startedAtOffset + (audioCtx.currentTime - state.startedAtCtxTime));
       state.currentSource = null;
@@ -217,7 +265,7 @@ function pausePlayback() {
   }
   const elapsed = audioCtx.currentTime - state.startedAtCtxTime;
   state.pausedOffset = Math.min(audioBuffer.duration, state.startedAtOffset + Math.max(elapsed, 0));
-  stopCurrentPlayback();
+  stopPlaybackWithFadeOut();
   playPauseBtn.textContent = "Play";
   updateSeekUI();
 }
