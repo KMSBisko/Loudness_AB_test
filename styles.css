@@ -1,0 +1,186 @@
+:root {
+  --bg: #f2f4f8;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #5b6472;
+  --accent: #0f766e;
+  --accent-hover: #115e59;
+  --border: #d7dce5;
+  --good: #166534;
+  --shadow: rgba(10, 20, 40, 0.05);
+  --page-grad-1: #e2efff;
+  --page-grad-2: #e9f7ef;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --card: #111827;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #0f766e;
+  --accent-hover: #0d9488;
+  --border: #334155;
+  --good: #4ade80;
+  --shadow: rgba(0, 0, 0, 0.45);
+  --page-grad-1: #1e293b;
+  --page-grad-2: #0b1220;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: radial-gradient(circle at top left, var(--page-grad-1) 0%, var(--bg) 40%, var(--page-grad-2) 100%);
+  color: var(--text);
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.app {
+  max-width: 840px;
+  margin: 2rem auto;
+  padding: 0 1rem 2rem;
+}
+
+h1 {
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  margin-top: 0;
+  color: var(--muted);
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.themeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+  white-space: nowrap;
+  margin-top: 0.4rem;
+}
+
+.themeToggle input {
+  width: auto;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 8px 24px var(--shadow);
+}
+
+.grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+input[type="number"],
+input[type="file"],
+input[type="range"] {
+  width: 100%;
+}
+
+button {
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.55rem 0.9rem;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.transport,
+.abButtons,
+.guess {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+#seekBar {
+  flex: 1;
+  min-width: 180px;
+}
+
+.timelineTime {
+  min-width: 120px;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+
+.variantBtn {
+  min-width: 120px;
+}
+
+.guessBtn {
+  background: #334155;
+}
+
+.guessBtn:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+.status {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+}
+
+.resultList {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.resultValue {
+  font-weight: 600;
+  color: var(--good);
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .headerRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .themeToggle {
+    margin-top: 0;
+  }
+}
